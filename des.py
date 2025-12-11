@@ -173,7 +173,7 @@ def main():
     with st.sidebar:
         st.title("⚙️ Filtros")
         periodo = st.selectbox("📅 Período", ["Últimos 7 dias", "Últimos 30 dias", "Todo o período"])
-        st.caption("Nexus Tracker v2.2")
+        st.caption("Nexus Tracker v2.3")
 
     st.markdown("## 🚀 Painel de Evolução")
 
@@ -237,13 +237,12 @@ def main():
                 # --- Lógica de Escala (Normalização 0-10) ---
                 
                 # 1. Estudo: Escala baseada no dia inteiro (1440 min = nota 10)
-                # Ex: 4h de estudo (240 min) -> (240/1440)*10 = 1.66
                 vals_radar['Estudo_min'] = (vals_radar['Estudo_min'] / 1440) * 10
                 
-                # 2. Treino: Escala onde 2 horas (120 min) = nota 10 (para equilíbrio visual)
+                # 2. Treino: Escala onde 2 horas (120 min) = nota 10
                 vals_radar['Treino_min'] = min((vals_radar['Treino_min'] / 120) * 10, 10)
                 
-                # 3. Sono: Escala onde 10 horas = nota 10.
+                # 3. Sono: Escala onde 10 horas = nota 10
                 vals_radar['Sono_h'] = min(vals_radar['Sono_h'], 10)
                 
                 # Plotagem
@@ -272,28 +271,45 @@ def main():
                 st.plotly_chart(fig_radar, use_container_width=True)
 
             with col_line:
-                st.markdown("##### 📈 Evolução de Produtividade")
+                st.markdown("##### 📈 Evolução: Estudo vs Score")
                 
                 fig_combo = go.Figure()
                 
-                # Barra de Estudo
+                # Barra de Estudo (Eixo Y1 - Esquerda)
                 fig_combo.add_trace(go.Bar(
                     x=df['Data'], y=df['Estudo_min'], name="Estudo (min)",
                     marker_color='rgba(79, 139, 249, 0.4)', yaxis='y'
                 ))
                 
-                # Linha de Treino (para comparar esforço físico x mental)
+                # Linha de Score (Eixo Y2 - Direita) - COR AMARELA (#FFA500)
                 fig_combo.add_trace(go.Scatter(
-                    x=df['Data'], y=df['Treino_min'], name="Treino (min)",
-                    mode='lines', line=dict(color='#FFA500', width=2, dash='dot'),
-                    yaxis='y'
+                    x=df['Data'], y=df['Score_diario'], name="Score do Dia",
+                    mode='lines+markers', 
+                    line=dict(color='#FFA500', width=3), # Linha Amarela
+                    yaxis='y2' # Eixo secundário
                 ))
                 
                 fig_combo.update_layout(
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
                     xaxis=dict(showgrid=False),
-                    yaxis=dict(title="Minutos", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                    
+                    # Eixo Y1 (Estudo)
+                    yaxis=dict(
+                        title="Minutos de Estudo", 
+                        showgrid=True, 
+                        gridcolor='rgba(255,255,255,0.05)'
+                    ),
+                    
+                    # Eixo Y2 (Score) - Para escala 0-100 não ficar "amassada"
+                    yaxis2=dict(
+                        title="Score (0-100)", 
+                        overlaying='y', 
+                        side='right', 
+                        showgrid=False,
+                        range=[0, 110] # Um pouco de margem acima de 100
+                    ),
+                    
                     legend=dict(orientation="h", y=1.1, x=0),
                     margin=dict(l=0, r=0, t=20, b=0)
                 )
