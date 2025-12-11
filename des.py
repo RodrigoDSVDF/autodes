@@ -8,6 +8,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import matplotlib.pyplot as plt
 from io import BytesIO
+import os
 
 # --- Configuração Inicial ---
 st.set_page_config(
@@ -247,7 +248,13 @@ def calcular_metricas_avancadas(df):
     
     # Identificar padrões
     df_analise['Tendencia_Score'] = df_analise['Score_diario'].diff()
-    df_analise['Dia_Semana'] = pd.to_datetime(df_analise['Data']).dt.day_name('pt_BR')
+    
+    # Dia da semana em inglês (evita problemas de locale)
+    df_analise['Dia_Semana_Num'] = pd.to_datetime(df_analise['Data']).dt.dayofweek
+    df_analise['Dia_Semana'] = df_analise['Dia_Semana_Num'].map({
+        0: 'Segunda', 1: 'Terça', 2: 'Quarta', 
+        3: 'Quinta', 4: 'Sexta', 5: 'Sábado', 6: 'Domingo'
+    })
     
     # Correlações
     metricas_correlacao = ['Estudo_min', 'Sono_h', 'Treino_min', 'Bem_estar', 
@@ -355,55 +362,66 @@ def gerar_relatorio_pdf(df):
     if len(df) < 2:
         return None
     
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-    fig.suptitle('Relatório de Auto-Desenvolvimento', fontsize=16, fontweight='bold')
-    
-    # Gráfico 1: Evolução do Score
-    axes[0, 0].plot(df['Data'], df['Score_diario'], marker='o', linewidth=2, color='#4F8BF9')
-    axes[0, 0].set_title('Evolução do Score Diário', fontsize=12)
-    axes[0, 0].set_xlabel('Data')
-    axes[0, 0].set_ylabel('Score (0-100)')
-    axes[0, 0].grid(True, alpha=0.3)
-    axes[0, 0].tick_params(axis='x', rotation=45)
-    
-    # Gráfico 2: Distribuição de Estudo
-    horas_estudo = df['Estudo_min'] / 60
-    axes[0, 1].hist(horas_estudo, bins=10, edgecolor='black', alpha=0.7, color='#00CC96')
-    axes[0, 1].set_title('Distribuição de Horas de Estudo', fontsize=12)
-    axes[0, 1].set_xlabel('Horas de Estudo')
-    axes[0, 1].set_ylabel('Frequência')
-    axes[0, 1].grid(True, alpha=0.3)
-    
-    # Gráfico 3: Correlação entre Sono e Score
-    axes[1, 0].scatter(df['Sono_h'], df['Score_diario'], alpha=0.6, color='#AB63FA')
-    axes[1, 0].set_title('Relação Sono vs Score', fontsize=12)
-    axes[1, 0].set_xlabel('Horas de Sono')
-    axes[1, 0].set_ylabel('Score')
-    axes[1, 0].grid(True, alpha=0.3)
-    
-    # Gráfico 4: Média por Dia da Semana
-    if 'Dia_Semana' in df.columns:
-        dias_ordem = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
-        df_dias = df.copy()
-        df_dias['Dia_Semana'] = pd.Categorical(df_dias['Dia_Semana'], categories=dias_ordem, ordered=True)
-        media_dias = df_dias.groupby('Dia_Semana', observed=False)['Score_diario'].mean()
+    try:
+        fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+        fig.suptitle('Relatório de Auto-Desenvolvimento', fontsize=16, fontweight='bold')
         
-        axes[1, 1].bar(media_dias.index, media_dias.values, color='#FFA500', alpha=0.7)
-        axes[1, 1].set_title('Score Médio por Dia da Semana', fontsize=12)
-        axes[1, 1].set_xlabel('Dia da Semana')
-        axes[1, 1].set_ylabel('Score Médio')
-        axes[1, 1].tick_params(axis='x', rotation=45)
-        axes[1, 1].grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    
-    # Converter para bytes
-    buf = BytesIO()
-    plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-    plt.close(fig)
-    buf.seek(0)
-    
-    return buf
+        # Gráfico 1: Evolução do Score
+        axes[0, 0].plot(df['Data'], df['Score_diario'], marker='o', linewidth=2, color='#4F8BF9')
+        axes[0, 0].set_title('Evolução do Score Diário', fontsize=12)
+        axes[0, 0].set_xlabel('Data')
+        axes[0, 0].set_ylabel('Score (0-100)')
+        axes[0, 0].grid(True, alpha=0.3)
+        axes[0, 0].tick_params(axis='x', rotation=45)
+        
+        # Gráfico 2: Distribuição de Estudo
+        horas_estudo = df['Estudo_min'] / 60
+        axes[0, 1].hist(horas_estudo, bins=10, edgecolor='black', alpha=0.7, color='#00CC96')
+        axes[0, 1].set_title('Distribuição de Horas de Estudo', fontsize=12)
+        axes[0, 1].set_xlabel('Horas de Estudo')
+        axes[0, 1].set_ylabel('Frequência')
+        axes[0, 1].grid(True, alpha=0.3)
+        
+        # Gráfico 3: Correlação entre Sono e Score
+        axes[1, 0].scatter(df['Sono_h'], df['Score_diario'], alpha=0.6, color='#AB63FA')
+        axes[1, 0].set_title('Relação Sono vs Score', fontsize=12)
+        axes[1, 0].set_xlabel('Horas de Sono')
+        axes[1, 0].set_ylabel('Score')
+        axes[1, 0].grid(True, alpha=0.3)
+        
+        # Gráfico 4: Média por Dia da Semana
+        if 'Dia_Semana' in df.columns:
+            dias_ordem = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+            
+            # Criar ordenação manual
+            df_dias = df.copy()
+            df_dias['Dia_Order'] = pd.Categorical(
+                df_dias['Dia_Semana'], 
+                categories=dias_ordem, 
+                ordered=True
+            )
+            media_dias = df_dias.groupby('Dia_Order')['Score_diario'].mean()
+            
+            axes[1, 1].bar(range(len(media_dias)), media_dias.values, color='#FFA500', alpha=0.7)
+            axes[1, 1].set_title('Score Médio por Dia da Semana', fontsize=12)
+            axes[1, 1].set_xlabel('Dia da Semana')
+            axes[1, 1].set_ylabel('Score Médio')
+            axes[1, 1].set_xticks(range(len(dias_ordem)))
+            axes[1, 1].set_xticklabels(dias_ordem, rotation=45)
+            axes[1, 1].grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        
+        # Converter para bytes
+        buf = BytesIO()
+        plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+        plt.close(fig)
+        buf.seek(0)
+        
+        return buf
+    except Exception as e:
+        st.error(f"Erro ao gerar relatório: {e}")
+        return None
 
 # --- Sistema de Metas ---
 def carregar_metas():
@@ -687,14 +705,19 @@ def main():
                     
                     dias_ordem = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
                     df_semana = df_analise.copy()
-                    df_semana['Dia_Semana'] = pd.Categorical(df_semana['Dia_Semana'], 
-                                                            categories=dias_ordem, ordered=True)
                     
-                    media_semana = df_semana.groupby('Dia_Semana', observed=False).agg({
+                    # Ordenar manualmente
+                    df_semana['Dia_Order'] = pd.Categorical(
+                        df_semana['Dia_Semana'], 
+                        categories=dias_ordem, 
+                        ordered=True
+                    )
+                    
+                    media_semana = df_semana.groupby('Dia_Order').agg({
                         'Score_diario': 'mean',
                         'Estudo_min': 'mean',
                         'Sono_h': 'mean'
-                    }).reindex(dias_ordem)
+                    })
                     
                     fig_semana = go.Figure()
                     fig_semana.add_trace(go.Bar(
@@ -917,7 +940,7 @@ def main():
             )
             
             # Botões de exportação
-            col_csv, col_excel = st.columns(2)
+            col_csv, col_json = st.columns(2)
             with col_csv:
                 csv = df_full.to_csv(index=False).encode('utf-8')
                 st.download_button(
@@ -928,30 +951,13 @@ def main():
                     use_container_width=True
                 )
             
-            with col_excel:
-                excel_buffer = BytesIO()
-                with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-                    df_full.to_excel(writer, sheet_name='Dados', index=False)
-                    
-                    # Adicionar sheet de resumo
-                    resumo = pd.DataFrame({
-                        'Métrica': ['Total Registros', 'Média Score', 'Total Estudo (h)', 'Total Treino (h)', 'Dias Organizados'],
-                        'Valor': [
-                            len(df_full), 
-                            df_full['Score_diario'].mean() if len(df_full) > 0 else 0, 
-                            df_full['Estudo_min'].sum()/60 if len(df_full) > 0 else 0, 
-                            df_full['Treino_min'].sum()/60 if len(df_full) > 0 else 0,
-                            df_full['Organizacao'].sum() if len(df_full) > 0 else 0
-                        ]
-                    })
-                    resumo.to_excel(writer, sheet_name='Resumo', index=False)
-                
-                excel_buffer.seek(0)
+            with col_json:
+                json_data = df_full.to_json(orient='records', indent=2)
                 st.download_button(
-                    "📊 Baixar Excel", 
-                    excel_buffer, 
-                    "nexus_completo.xlsx", 
-                    "application/vnd.ms-excel",
+                    "📊 Baixar JSON",
+                    json_data,
+                    "nexus_dados.json",
+                    "application/json",
                     use_container_width=True
                 )
         
