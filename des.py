@@ -98,9 +98,6 @@ def get_connection():
 
 @st.cache_data(ttl=60)
 def load_data():
-    # ATENÇÃO: Se na sua planilha a coluna ainda se chama "Estudo_h", o script vai ler.
-    # Mas internamente vamos tratar como "Estudo_min". 
-    # Sugestão: Renomeie o cabeçalho na planilha para "Estudo_min" para ficar organizado.
     cols = ["Data", "Estudo_min", "Organizacao", "Treino_min", "Bem_estar", 
             "Sono_h", "Nutricao", "Motivacao", "Relacoes", "Score_diario", "Observacoes"]
     
@@ -114,7 +111,7 @@ def load_data():
             
         df = pd.DataFrame(data)
         
-        # Ajuste de compatibilidade caso a planilha antiga tenha cabeçalho "Estudo_h"
+        # Ajuste de compatibilidade para nomes de colunas antigos
         if "Estudo_h" in df.columns:
             df.rename(columns={"Estudo_h": "Estudo_min"}, inplace=True)
 
@@ -125,7 +122,6 @@ def load_data():
                         "Sono_h", "Nutricao", "Motivacao", "Relacoes", "Score_diario"]
         
         for col in numeric_cols:
-            # Se não existir a coluna (ex: planilha nova), cria com 0
             if col not in df.columns:
                 df[col] = 0
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
@@ -141,7 +137,6 @@ def save_entry_google(data_dict):
         client = get_connection()
         sheet = client.open(SHEET_NAME).sheet1
         
-        # Cálculo do Score
         nota_org = 10 if data_dict["Organizacao"] == 1 else 0
         
         # Cálculo simplificado do score (0 a 100)
@@ -153,7 +148,7 @@ def save_entry_google(data_dict):
         
         row = [
             str(data_dict["Data"]),
-            data_dict["Estudo_min"], # Agora salvando minutos inteiros
+            data_dict["Estudo_min"], 
             data_dict["Organizacao"],
             data_dict["Treino_min"],
             data_dict["Bem_estar"],
@@ -175,20 +170,17 @@ def save_entry_google(data_dict):
 def main():
     apply_custom_styles()
     
-    # Sidebar
     with st.sidebar:
         st.title("⚙️ Filtros")
         periodo = st.selectbox("📅 Período", ["Últimos 7 dias", "Últimos 30 dias", "Todo o período"])
-        st.caption("Nexus Tracker v2.1")
+        st.caption("Nexus Tracker v2.2")
 
     st.markdown("## 🚀 Painel de Evolução")
 
-    # Load Data
     if 'df' not in st.session_state:
         st.session_state.df = load_data()
     df_full = st.session_state.df
 
-    # Filtragem de Data
     if not df_full.empty:
         if periodo == "Últimos 7 dias":
             cutoff = date.today() - timedelta(days=7)
@@ -208,7 +200,7 @@ def main():
         if not df.empty and len(df) > 0:
             last = df.iloc[-1]
             
-            # Comparação com dia anterior
+            # Score Delta
             delta_html = "&nbsp;"
             delta_color = "#9CA3AF"
             if len(df) > 1:
@@ -221,37 +213,44 @@ def main():
 
             # KPIs
             total_estudo_min = df['Estudo_min'].sum()
-            # Converte total para horas apenas para visualização no card se quiser, ou mantem minutos
-            # Vou deixar minutos como pedido, ou formatar ex: 1200 min
+            horas_estudo = total_estudo_min / 60
             
             c1, c2, c3, c4 = st.columns(4)
             with c1: metric_card("Score Hoje", f"{last['Score_diario']:.0f}", delta_html, delta_color)
-            with c2: metric_card("Total Estudo", f"{total_estudo_min:.0f} min", "Acumulado Período", "#4F8BF9")
+            with c2: metric_card("Total Estudo", f"{horas_estudo:.1f}h", f"{total_estudo_min} min totais", "#4F8BF9")
             with c3: metric_card("Treino Físico", f"{df['Treino_min'].sum()} min", "Acumulado Período", "#FFA500")
             with c4: metric_card("Média Sono", f"{df['Sono_h'].mean():.1f}h", "Qualidade do descanso", "#AB63FA")
 
             st.markdown("<br>", unsafe_allow_html=True)
             
             # Gráficos
-            col_radar, col_line = st.columns([0.4, 0.6])
+            col_radar, col_line = st.columns([0.5, 0.5])
             
             with col_radar:
                 st.markdown("##### 🕸️ Radar de Equilíbrio")
+                st.caption("A escala de estudo considera o total de minutos do dia (1440 min).")
                 
-                # --- Lógica de Escala para o Radar ---
-                # Como Estudo agora é em minutos (ex: 120), precisamos converter para escala 0-10
-                # Regra adotada: Cada 30 min de estudo = 1 ponto no gráfico (300 min = Nota 10)
-                radar_cols = ['Estudo_min', 'Sono_h', 'Nutricao', 'Motivacao', 'Relacoes', 'Bem_estar']
+                # Definir colunas para o Radar (Incluindo TREINO e ESTUDO)
+                radar_cols = ['Estudo_min', 'Treino_min', 'Sono_h', 'Nutricao', 'Motivacao', 'Relacoes', 'Bem_estar']
                 vals_radar = last[radar_cols].copy()
                 
-                # Normalização visual (apenas para o gráfico, não altera o dado)
-                vals_radar['Estudo_min'] = min(vals_radar['Estudo_min'] / 30, 10) # 30 min = 1 pt
-                vals_radar['Sono_h'] = min(vals_radar['Sono_h'], 12) # Limite visual para sono
+                # --- Lógica de Escala (Normalização 0-10) ---
+                
+                # 1. Estudo: Escala baseada no dia inteiro (1440 min = nota 10)
+                # Ex: 4h de estudo (240 min) -> (240/1440)*10 = 1.66
+                vals_radar['Estudo_min'] = (vals_radar['Estudo_min'] / 1440) * 10
+                
+                # 2. Treino: Escala onde 2 horas (120 min) = nota 10 (para equilíbrio visual)
+                vals_radar['Treino_min'] = min((vals_radar['Treino_min'] / 120) * 10, 10)
+                
+                # 3. Sono: Escala onde 10 horas = nota 10.
+                vals_radar['Sono_h'] = min(vals_radar['Sono_h'], 10)
                 
                 # Plotagem
                 r_vals = vals_radar.values.tolist()
-                r_vals.append(r_vals[0])
-                theta_vals = ['Estudo', 'Sono', 'Nutrição', 'Motivação', 'Relações', 'Bem-estar']
+                r_vals.append(r_vals[0]) # Fechar o ciclo
+                
+                theta_vals = ['Estudo (Dia)', 'Treino', 'Sono', 'Nutrição', 'Motivação', 'Relações', 'Bem-estar']
                 theta_vals.append(theta_vals[0])
                 
                 fig_radar = go.Figure()
@@ -263,9 +262,9 @@ def main():
                 fig_radar.update_layout(
                     polar=dict(
                         radialaxis=dict(visible=True, range=[0, 10], showticklabels=False, linecolor='rgba(255,255,255,0.1)'),
-                        angularaxis=dict(tickfont=dict(size=12, color='#9CA3AF'))
+                        angularaxis=dict(tickfont=dict(size=11, color='#9CA3AF'))
                     ),
-                    margin=dict(t=20, b=20, l=40, r=40),
+                    margin=dict(t=30, b=30, l=40, r=40),
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
                     dragmode=False
@@ -273,29 +272,28 @@ def main():
                 st.plotly_chart(fig_radar, use_container_width=True)
 
             with col_line:
-                st.markdown("##### 📈 Evolução vs Estudo")
+                st.markdown("##### 📈 Evolução de Produtividade")
                 
                 fig_combo = go.Figure()
                 
-                # Barra de Estudo (Eixo Y Esquerdo)
+                # Barra de Estudo
                 fig_combo.add_trace(go.Bar(
                     x=df['Data'], y=df['Estudo_min'], name="Estudo (min)",
-                    marker_color='rgba(79, 139, 249, 0.3)', yaxis='y'
+                    marker_color='rgba(79, 139, 249, 0.4)', yaxis='y'
                 ))
                 
-                # Linha de Score (Eixo Y Direito para melhor visualização se as escalas forem muito diferentes)
+                # Linha de Treino (para comparar esforço físico x mental)
                 fig_combo.add_trace(go.Scatter(
-                    x=df['Data'], y=df['Score_diario'], name="Score Geral",
-                    mode='lines+markers', line=dict(color='#00CC96', width=3),
-                    yaxis='y2'
+                    x=df['Data'], y=df['Treino_min'], name="Treino (min)",
+                    mode='lines', line=dict(color='#FFA500', width=2, dash='dot'),
+                    yaxis='y'
                 ))
                 
                 fig_combo.update_layout(
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
                     xaxis=dict(showgrid=False),
-                    yaxis=dict(title="Minutos Estudo", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                    yaxis2=dict(title="Score (0-100)", overlaying='y', side='right', showgrid=False),
+                    yaxis=dict(title="Minutos", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
                     legend=dict(orientation="h", y=1.1, x=0),
                     margin=dict(l=0, r=0, t=20, b=0)
                 )
@@ -313,23 +311,20 @@ def main():
                 c1, c2 = st.columns(2)
                 
                 with c1:
-                    st.info("🎯 Produtividade")
+                    st.info("🎯 Métricas Objetivas")
                     data_input = st.date_input("Data", date.today())
-                    
-                    # --- MUDANÇA AQUI: Campo Numérico Inteiro Livre ---
-                    estudo_min = st.number_input("⏱️ Minutos de Estudo", min_value=0, max_value=1440, value=60, step=1, help="Insira o tempo exato em minutos (ex: 90, 120)")
-                    
-                    treino_min = st.number_input("🏋️ Treino (min)", 0, 300, 45, step=5)
-                    sono_h = st.number_input("💤 Sono (h)", 0.0, 24.0, 7.0, 0.5)
+                    estudo_min = st.number_input("⏱️ Estudo (minutos brutos)", min_value=0, max_value=1440, value=60, step=10)
+                    treino_min = st.number_input("🏋️ Treino (minutos)", 0, 300, 45, step=5)
+                    sono_h = st.number_input("💤 Sono (horas)", 0.0, 24.0, 7.0, 0.5)
                 
                 with c2:
-                    st.success("🧠 Equilíbrio (1-10)")
+                    st.success("🧠 Métricas Subjetivas (1-10)")
                     bem_estar = st.slider("Bem-estar Geral", 1, 10, 7)
                     nutricao = st.slider("Qualidade da Nutrição", 1, 10, 7)
                     motivacao = st.slider("Nível de Motivação", 1, 10, 7)
                     relacoes = st.slider("Relacionamentos", 1, 10, 7)
                     st.write("")
-                    organizacao = st.toggle("✅ Cumpri o planejado?", value=True)
+                    organizacao = st.toggle("✅ Cumpri a organização?", value=True)
                 
                 st.markdown("---")
                 observacoes = st.text_area("Diário de Bordo", placeholder="Insights do dia...")
@@ -345,25 +340,19 @@ def main():
                         "Motivacao": motivacao, "Relacoes": relacoes,
                         "Observacoes": observacoes
                     }
-                    with st.spinner("Salvando..."):
+                    with st.spinner("Processando..."):
                         if save_entry_google(entry):
                             st.cache_data.clear()
                             st.session_state.df = load_data() 
-                            st.toast("Salvo com sucesso!", icon="✅")
+                            st.toast("Registro salvo!", icon="✅")
 
     # --- ABA 3: DADOS ---
     with tab3:
-        st.markdown("### 🗄️ Base de Dados Completa")
+        st.markdown("### 🗄️ Base de Dados")
         st.dataframe(
             df_full.sort_values(by="Data", ascending=False), 
-            use_container_width=True,
-            column_config={
-                "Data": st.column_config.DateColumn("Data", format="DD/MM/YYYY"),
-                "Estudo_min": st.column_config.NumberColumn("Estudo (min)", format="%d min"),
-                "Score_diario": st.column_config.ProgressColumn("Score", format="%d", min_value=0, max_value=100)
-            }
+            use_container_width=True
         )
-        
         csv = df_full.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Baixar CSV", csv, "nexus_backup.csv", "text/csv")
 
