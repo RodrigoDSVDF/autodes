@@ -11,10 +11,10 @@ from io import BytesIO
 
 # --- Configuração Inicial ---
 st.set_page_config(
-    page_title="Nexus | Performance Tracker",
-    page_icon="🎯",
+    page_title="Diário de Desenvolvimento",
+    page_icon="📓",
     layout="wide",
-    initial_sidebar_state="collapsed"  # Melhor para mobile
+    initial_sidebar_state="collapsed"
 )
 
 # --- CSS Profissional Mobile-First ---
@@ -38,7 +38,6 @@ def apply_custom_styles():
             --border: rgba(148, 163, 184, 0.1);
         }
 
-        /* Reset e Base */
         * { box-sizing: border-box; }
         
         html, body, [class*="css"] { 
@@ -51,30 +50,29 @@ def apply_custom_styles():
             min-height: 100vh;
         }
 
-        /* Mobile Header */
         .mobile-header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 1rem;
-            margin: -1rem -1rem 1rem -1rem;
+            padding: 1.5rem 1rem;
+            margin: -1rem -1rem 1.5rem -1rem;
             text-align: center;
             box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
         }
         
         .mobile-header h1 {
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 800;
             margin: 0;
             letter-spacing: -0.02em;
         }
         
         .mobile-header p {
-            color: rgba(255,255,255,0.8);
-            font-size: 0.875rem;
-            margin: 0.25rem 0 0 0;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+            margin: 0.5rem 0 0 0;
+            font-weight: 500;
         }
 
-        /* Cards Modernos */
         .metric-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -164,7 +162,6 @@ def apply_custom_styles():
         .metric-sub.negative { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
         .metric-sub.neutral { color: var(--text-secondary); }
 
-        /* Gráficos Container */
         .chart-container {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -183,7 +180,6 @@ def apply_custom_styles():
             gap: 0.5rem;
         }
 
-        /* Formulários Modernos */
         .stForm {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -191,7 +187,6 @@ def apply_custom_styles():
             padding: 1.5rem;
         }
 
-        /* Inputs Customizados */
         div[data-testid="stNumberInput"] input,
         div[data-testid="stDateInput"] input {
             background: var(--bg-elevated) !important;
@@ -201,7 +196,6 @@ def apply_custom_styles():
             font-weight: 500;
         }
 
-        /* Sliders Modernos */
         .stSlider > div > div > div {
             background: var(--bg-elevated) !important;
         }
@@ -212,7 +206,6 @@ def apply_custom_styles():
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4) !important;
         }
 
-        /* Toggle Moderno */
         .stToggle > div > div > div {
             background: var(--bg-elevated) !important;
         }
@@ -221,7 +214,6 @@ def apply_custom_styles():
             background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
         }
 
-        /* Botões */
         div.stButton > button {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
@@ -242,7 +234,6 @@ def apply_custom_styles():
         
         div.stButton > button:active { transform: translateY(0); }
 
-        /* Tabs Modernas */
         .stTabs [data-baseweb="tab-list"] {
             gap: 0.5rem;
             background: var(--bg-card);
@@ -266,7 +257,6 @@ def apply_custom_styles():
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        /* Badges e Tags */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -291,17 +281,6 @@ def apply_custom_styles():
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
-        /* Progresso Circular */
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-        
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.35s;
-            transform-origin: 50% 50%;
-        }
-
-        /* Animações */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -317,25 +296,22 @@ def apply_custom_styles():
             animation: fadeInUp 0.6s ease-out forwards;
         }
 
-        /* Responsividade Mobile */
         @media (max-width: 768px) {
             .metric-value { font-size: 1.5rem; }
             .metric-card { padding: 1rem; }
             .stTabs [data-baseweb="tab"] { padding: 0.5rem 0.75rem !important; font-size: 0.75rem !important; }
             .chart-container { padding: 1rem; }
+            .mobile-header h1 { font-size: 1.5rem; }
         }
 
-        /* Sidebar Mobile */
         @media (max-width: 768px) {
             [data-testid="stSidebar"] { width: 100% !important; }
         }
 
-        /* Esconder elementos padrão do Streamlit */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* Scrollbar customizada */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -349,7 +325,7 @@ def apply_custom_styles():
         </style>
     """, unsafe_allow_html=True)
 
-# --- Componentes Visuais Aprimorados ---
+# --- Componentes Visuais ---
 def metric_card_modern(label, value, subtext=None, icon="📊", featured=False, delay=0):
     featured_class = "featured" if featured else ""
     sub_class = "neutral"
@@ -379,7 +355,31 @@ def metric_card_modern(label, value, subtext=None, icon="📊", featured=False, 
     </div>
     """, unsafe_allow_html=True)
 
-# --- CONEXÃO GOOGLE SHEETS (mantida) ---
+# --- Funções de Data em Português ---
+def formatar_data_extenso(data_obj):
+    """Converte data para formato 'dia de mês de ano' em português"""
+    meses = {
+        1: 'janeiro', 2: 'fevereiro', 3: 'março', 4: 'abril',
+        5: 'maio', 6: 'junho', 7: 'julho', 8: 'agosto',
+        9: 'setembro', 10: 'outubro', 11: 'novembro', 12: 'dezembro'
+    }
+    
+    if isinstance(data_obj, str):
+        data_obj = pd.to_datetime(data_obj).date()
+    
+    dia = data_obj.day
+    mes = meses[data_obj.month]
+    ano = data_obj.year
+    
+    return f"{dia} de {mes} de {ano}"
+
+def formatar_data_curta(data_obj):
+    """Converte data para formato 'dia/mês'"""
+    if isinstance(data_obj, str):
+        data_obj = pd.to_datetime(data_obj).date()
+    return f"{data_obj.day}/{data_obj.month}"
+
+# --- CONEXÃO GOOGLE SHEETS ---
 SHEET_NAME = "AutoDesenvolvimento_DB"
 
 def get_connection():
@@ -454,7 +454,7 @@ def save_entry_google(data_dict):
         st.error(f"Erro ao salvar: {e}")
         return False
 
-# --- Funções de Análise (mantidas e melhoradas) ---
+# --- Funções de Análise ---
 def calcular_metricas_avancadas(df):
     if len(df) == 0:
         return df, None
@@ -465,7 +465,7 @@ def calcular_metricas_avancadas(df):
     
     df_analise['Dia_Semana_Num'] = pd.to_datetime(df_analise['Data']).dt.dayofweek
     df_analise['Dia_Semana'] = df_analise['Dia_Semana_Num'].map({
-        0: 'Seg', 1: 'Ter', 2: 'Qua', 3: 'Qui', 4: 'Sex', 5: 'Sáb', 6: 'Dom'
+        0: 'Segunda', 1: 'Terça', 2: 'Quarta', 3: 'Quinta', 4: 'Sexta', 5: 'Sábado', 6: 'Domingo'
     })
     
     metricas_correlacao = ['Estudo_min', 'Sono_h', 'Treino_min', 'Bem_estar', 
@@ -501,12 +501,12 @@ def calcular_pontos_recompensa(df):
     total_estudo = df['Estudo_min'].sum()
     if total_estudo > 10000:
         pontos += 50
-        conquistas.append("📚 +10k minutos de estudo")
+        conquistas.append("📚 +10 mil minutos de estudo")
     
     total_treino = df['Treino_min'].sum()
     if total_treino > 3000:
         pontos += 30
-        conquistas.append("💪 +3k minutos de treino")
+        conquistas.append("💪 +3 mil minutos de treino")
     
     dias_organizados = df['Organizacao'].sum()
     if dias_organizados >= 30:
@@ -586,36 +586,35 @@ def verificar_metas(df, metas):
 
 # --- Gráficos Aprimorados ---
 def criar_grafico_linha_progresso(df):
-    """Gráfico de linha principal mostrando progresso ao longo do tempo"""
     if len(df) < 2:
         return None
     
     fig = go.Figure()
     
-    # Linha principal do Score
     fig.add_trace(go.Scatter(
-        x=df['Data'],
+        x=[formatar_data_curta(d) for d in df['Data']],
         y=df['Score_diario'],
         mode='lines+markers',
         name='Score Diário',
         line=dict(color='#6366f1', width=3),
         marker=dict(size=8, color='#6366f1', line=dict(width=2, color='#1e293b')),
         fill='tozeroy',
-        fillcolor='rgba(99, 102, 241, 0.1)'
+        fillcolor='rgba(99, 102, 241, 0.1)',
+        hovertemplate='%{x}<br>Score: %{y:.0f}<extra></extra>'
     ))
     
-    # Média móvel de 7 dias
     if len(df) >= 7:
-        df['MA7'] = df['Score_diario'].rolling(window=7).mean()
+        df_temp = df.copy()
+        df_temp['MA7'] = df_temp['Score_diario'].rolling(window=7).mean()
         fig.add_trace(go.Scatter(
-            x=df['Data'],
-            y=df['MA7'],
+            x=[formatar_data_curta(d) for d in df_temp['Data']],
+            y=df_temp['MA7'],
             mode='lines',
             name='Média 7 dias',
-            line=dict(color='#ec4899', width=2, dash='dash')
+            line=dict(color='#ec4899', width=2, dash='dash'),
+            hovertemplate='%{x}<br>Média: %{y:.1f}<extra></extra>'
         ))
     
-    # Linha de meta (70)
     fig.add_hline(y=70, line_dash="dot", line_color="#10b981", 
                   annotation_text="Meta", annotation_position="right")
     
@@ -627,13 +626,14 @@ def criar_grafico_linha_progresso(df):
         xaxis=dict(
             showgrid=False,
             tickfont=dict(size=11),
-            tickformat='%d/%m'
+            title='Data'
         ),
         yaxis=dict(
             showgrid=True,
             gridcolor='rgba(148, 163, 184, 0.1)',
             range=[0, 105],
-            tickfont=dict(size=11)
+            tickfont=dict(size=11),
+            title='Score'
         ),
         legend=dict(
             orientation="h",
@@ -650,30 +650,29 @@ def criar_grafico_linha_progresso(df):
     return fig
 
 def criar_grafico_comparativo(df):
-    """Gráfico comparando Estudo e Treino ao longo do tempo"""
     if len(df) < 2:
         return None
     
     fig = go.Figure()
     
-    # Estudo em barras
     fig.add_trace(go.Bar(
-        x=df['Data'],
+        x=[formatar_data_curta(d) for d in df['Data']],
         y=df['Estudo_min'],
         name='Estudo (min)',
         marker_color='rgba(59, 130, 246, 0.6)',
-        yaxis='y'
+        yaxis='y',
+        hovertemplate='%{x}<br>Estudo: %{y} min<extra></extra>'
     ))
     
-    # Treino em linha
     fig.add_trace(go.Scatter(
-        x=df['Data'],
+        x=[formatar_data_curta(d) for d in df['Data']],
         y=df['Treino_min'],
         mode='lines+markers',
         name='Treino (min)',
         line=dict(color='#10b981', width=3),
         marker=dict(size=6),
-        yaxis='y2'
+        yaxis='y2',
+        hovertemplate='%{x}<br>Treino: %{y} min<extra></extra>'
     ))
     
     fig.update_layout(
@@ -681,7 +680,7 @@ def criar_grafico_comparativo(df):
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#94a3b8'),
-        xaxis=dict(showgrid=False, tickformat='%d/%m'),
+        xaxis=dict(showgrid=False),
         yaxis=dict(
             title='Minutos Estudo',
             showgrid=True,
@@ -703,7 +702,6 @@ def criar_grafico_comparativo(df):
     return fig
 
 def criar_radar_performance(df):
-    """Radar chart com dados mais recentes"""
     if len(df) == 0:
         return None
     
@@ -711,10 +709,9 @@ def criar_radar_performance(df):
     
     categories = ['Estudo', 'Treino', 'Sono', 'Nutrição', 'Motivação', 'Relações', 'Bem-estar']
     
-    # Normalização para escala 0-10
     values = [
-        min((last['Estudo_min'] / 240) * 10, 10),  # 4h = 10
-        min((last['Treino_min'] / 60) * 10, 10),   # 1h = 10
+        min((last['Estudo_min'] / 240) * 10, 10),
+        min((last['Treino_min'] / 60) * 10, 10),
         min(last['Sono_h'], 10),
         last['Nutricao'],
         last['Motivacao'],
@@ -722,7 +719,7 @@ def criar_radar_performance(df):
         last['Bem_estar']
     ]
     
-    values += values[:1]  # Fechar o polígono
+    values += values[:1]
     
     fig = go.Figure()
     
@@ -735,7 +732,6 @@ def criar_radar_performance(df):
         name='Hoje'
     ))
     
-    # Adicionar círculo de referência (meta = 7)
     fig.add_trace(go.Scatterpolar(
         r=[7]*8,
         theta=categories + [categories[0]],
@@ -768,17 +764,15 @@ def criar_radar_performance(df):
     return fig
 
 def criar_heatmap_semanal(df):
-    """Heatmap de performance por dia da semana"""
     if len(df) < 7:
         return None
     
-    df['Dia'] = pd.to_datetime(df['Data']).dt.day_name()
-    df['Semana'] = pd.to_datetime(df['Data']).dt.isocalendar().week
+    df_temp = df.copy()
+    df_temp['Dia'] = pd.to_datetime(df_temp['Data']).dt.day_name()
+    df_temp['Semana'] = pd.to_datetime(df_temp['Data']).dt.isocalendar().week
     
-    # Pivot para heatmap
-    pivot = df.pivot_table(values='Score_diario', index='Semana', columns='Dia', aggfunc='mean')
+    pivot = df_temp.pivot_table(values='Score_diario', index='Semana', columns='Dia', aggfunc='mean')
     
-    # Reordenar colunas
     dias_ordem = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     dias_pt = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
     
@@ -807,15 +801,18 @@ def criar_heatmap_semanal(df):
 def main():
     apply_custom_styles()
     
-    # Header Mobile
-    st.markdown("""
+    data_atual = date.today()
+    data_formatada = formatar_data_extenso(data_atual)
+    
+    # Header com título atualizado
+    st.markdown(f"""
     <div class="mobile-header">
-        <h1>🎯 NEXUS</h1>
-        <p>Performance Tracker</p>
+        <h1>📓 Diário de Desenvolvimento</h1>
+        <p>{data_formatada}</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar (hamburger menu no mobile)
+    # Sidebar
     with st.sidebar:
         st.title("⚙️ Menu")
         
@@ -827,7 +824,6 @@ def main():
         
         st.markdown("---")
         
-        # Gamificação
         if 'df' not in st.session_state:
             st.session_state.df = load_data()
         
@@ -848,7 +844,7 @@ def main():
         
         st.markdown("---")
         st.caption(f"📊 {len(st.session_state.df)} registros")
-        st.caption("Nexus v4.0")
+        st.caption("Diário de Desenvolvimento v1.0")
 
     # Carregar dados
     if 'df' not in st.session_state:
@@ -876,8 +872,9 @@ def main():
     with tab1:
         if not df.empty and len(df) > 0:
             last = df.iloc[-1]
+            data_ultimo_registro = formatar_data_extenso(last['Data'])
             
-            # KPIs principais - Layout responsivo
+            # KPIs principais
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
@@ -899,6 +896,8 @@ def main():
             with col4:
                 media_sono = df['Sono_h'].mean()
                 metric_card_modern("Média Sono", f"{media_sono:.1f}h", "Qualidade", "😴", delay=300)
+
+            st.markdown(f"<p style='color: #94a3b8; font-size: 0.875rem; margin-top: 1rem;'>Último registro: {data_ultimo_registro}</p>", unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -952,7 +951,8 @@ def main():
                     st.info(f"**Média 7 dias:** {media_7:.1f} pts")
             with cols[2]:
                 melhor_dia = df.loc[df['Score_diario'].idxmax()]
-                st.info(f"**Recorde:** {melhor_dia['Score_diario']:.0f} pts ({melhor_dia['Data']})")
+                data_melhor = formatar_data_extenso(melhor_dia['Data'])
+                st.info(f"**Recorde:** {melhor_dia['Score_diario']:.0f} pts ({formatar_data_curta(melhor_dia['Data'])})")
 
         else:
             st.info("👈 Comece registrando seus dados na aba 'Registro'!")
@@ -963,13 +963,15 @@ def main():
         
         with col_form:
             st.markdown("### 📝 Novo Registro Diário")
+            data_hoje = date.today()
+            st.markdown(f"<p style='color: #94a3b8; margin-bottom: 1rem;'>Data de hoje: {formatar_data_extenso(data_hoje)}</p>", unsafe_allow_html=True)
             
             with st.form("entry_form", clear_on_submit=True):
                 col1, col2 = st.columns(2)
                 
                 with col1:
                     st.markdown("**⏱️ Métricas Quantitativas**")
-                    data_input = st.date_input("Data", date.today())
+                    data_input = st.date_input("Data do registro", date.today())
                     estudo_min = st.number_input("📚 Estudo (minutos)", 0, 1440, 60, step=10)
                     treino_min = st.number_input("💪 Treino (minutos)", 0, 300, 45, step=5)
                     sono_h = st.slider("😴 Sono (horas)", 0.0, 12.0, 7.0, 0.5)
@@ -1005,7 +1007,7 @@ def main():
                         if save_entry_google(entry):
                             st.cache_data.clear()
                             st.session_state.df = load_data()
-                            st.success("✅ Registro salvo com sucesso!")
+                            st.success(f"✅ Registro de {formatar_data_extenso(data_input)} salvo com sucesso!")
                             st.balloons()
                             st.rerun()
 
@@ -1075,36 +1077,53 @@ def main():
         
         with col_dados:
             st.markdown("**📋 Histórico Completo**")
+            
+            # Preparar dataframe para exibição com data formatada
+            df_display = df_full.copy()
+            df_display['Data_Formatada'] = df_display['Data'].apply(formatar_data_extenso)
+            df_display = df_display.sort_values(by="Data", ascending=False)
+            
             st.dataframe(
-                df_full.sort_values(by="Data", ascending=False).style.background_gradient(subset=['Score_diario'], cmap='viridis'),
+                df_display[['Data_Formatada', 'Score_diario', 'Estudo_min', 'Treino_min', 'Sono_h', 'Observacoes']].style.background_gradient(subset=['Score_diario'], cmap='viridis'),
                 use_container_width=True,
-                height=400
+                height=400,
+                column_config={
+                    "Data_Formatada": "Data",
+                    "Score_diario": "Score",
+                    "Estudo_min": "Estudo (min)",
+                    "Treino_min": "Treino (min)",
+                    "Sono_h": "Sono (h)",
+                    "Observacoes": "Observações"
+                }
             )
         
         with col_export:
             st.markdown("**💾 Exportar Dados**")
             
-            csv = df_full.to_csv(index=False).encode('utf-8')
+            # Adicionar data formatada ao CSV
+            df_export = df_full.copy()
+            df_export['Data_Extenso'] = df_export['Data'].apply(formatar_data_extenso)
+            
+            csv = df_export.to_csv(index=False).encode('utf-8')
             st.download_button(
                 "📥 Download CSV",
                 csv,
-                "nexus_dados.csv",
+                "diario_desenvolvimento.csv",
                 "text/csv",
                 use_container_width=True
             )
             
-            json_data = df_full.to_json(orient='records', indent=2)
+            json_data = df_export.to_json(orient='records', indent=2)
             st.download_button(
                 "📊 Download JSON",
                 json_data,
-                "nexus_dados.json",
+                "diario_desenvolvimento.json",
                 "application/json",
                 use_container_width=True
             )
             
             st.markdown("---")
             
-            # Estatísticas rápidas
             if len(df) > 0:
                 st.markdown("**📊 Estatísticas**")
                 st.metric("Melhor Score", f"{df['Score_diario'].max():.0f}")
